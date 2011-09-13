@@ -1,0 +1,12 @@
+--- pngnq-1.0.orig/src/rwpng.c
++++ pngnq-1.0/src/rwpng.c
+@@ -32,7 +32,8 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ 
+-#include "png.h"        /* libpng header; includes zlib.h */
++#include "png.h"        /* libpng header */
++#include "zlib.h"
+ #include "rwpng.h"      /* typedefs, common macros, public prototypes */
+ 
+ /* future versions of libpng will provide this macro: */

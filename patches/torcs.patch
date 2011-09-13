@@ -1,0 +1,47 @@
+diff -u torcs-1.3.1/debian/changelog torcs-1.3.1/debian/changelog
+--- torcs-1.3.1/debian/changelog
++++ torcs-1.3.1/debian/changelog
+@@ -1,3 +1,10 @@
++torcs (1.3.1-5.1) unstable; urgency=low
++
++  * Non-maintainer upload.
++  * libpng transition.
++
++ -- Nobuhiro Iwamatsu <iwamatsu@nigauri.org>  Wed, 08 Jun 2011 23:24:53 +0900
++
+ torcs (1.3.1-5) unstable; urgency=low
+ 
+   * Fixed insecure library loading (LD_LIBRARY_PATH) (CVE-2010-3384) Closes: #598306.
+only in patch2:
+unchanged:
+--- torcs-1.3.1.orig/debian/patches/05_libpng15.patch
++++ torcs-1.3.1/debian/patches/05_libpng15.patch
+@@ -0,0 +1,28 @@
++--- src/libs/tgfclient/img.cpp	2011-06-08 23:21:37.000000000 +0900
+++++ src/libs/tgfclient/img.cpp	2011-06-08 23:22:21.000000000 +0900
++@@ -97,8 +97,11 @@
++ 		png_destroy_read_struct(&png_ptr, (png_infopp)NULL, (png_infopp)NULL);
++ 		return (unsigned char *)NULL;
++ 	}
++-	
+++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
+++	if (setjmp(png_jmpbuf(png_ptr)))
+++#else
++ 	if (setjmp(png_ptr->jmpbuf))
+++#endif
++ 	{
++ 		/* Free all of the memory associated with the png_ptr and info_ptr */
++ 		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
++@@ -229,7 +232,11 @@
++ 		return -1;
++ 	}
++ 	
++-	if (setjmp(png_ptr->jmpbuf)) {    
+++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
+++	if (setjmp(png_jmpbuf(png_ptr))) {
+++#else
+++	if (setjmp(png_ptr->jmpbuf)) {
+++#endif
++ 		png_destroy_write_struct(&png_ptr, &info_ptr);
++ 		fclose(fp);
++ 		return -1;

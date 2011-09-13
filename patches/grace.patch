@@ -1,0 +1,25 @@
+--- grace-5.1.22.orig/src/rstdrv.c
++++ grace-5.1.22/src/rstdrv.c
+@@ -54,6 +54,9 @@
+ 
+ #ifdef HAVE_LIBPNG
+ #  include <png.h>
++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
++#  include <zlib.h>
++#endif
+ #endif
+ 
+ #ifndef NONE_GUI
+@@ -884,8 +887,11 @@ static void rstImagePng(gdImagePtr ihand
+         png_destroy_write_struct(&png_ptr, NULL);
+         return;
+     }
+-
++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
++    if (setjmp(png_jmpbuf((png_ptr)))) {
++#else
+     if (setjmp(png_ptr->jmpbuf)) {
++#endif
+         png_destroy_write_struct(&png_ptr, &info_ptr);
+         return;
+     }

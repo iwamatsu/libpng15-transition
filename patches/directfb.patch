@@ -1,0 +1,317 @@
+diff -Nru directfb-1.2.10.0/debian/changelog directfb-1.2.10.0/debian/changelog
+--- directfb-1.2.10.0/debian/changelog	2010-07-01 03:11:41.000000000 +0900
++++ directfb-1.2.10.0/debian/changelog	2011-06-07 11:29:25.000000000 +0900
+@@ -1,3 +1,11 @@
++directfb (1.2.10.0-4.1) unstable; urgency=low
++
++  * Non-maintainer upload.
++  * libpng transition.
++  * Fix FTBFS.
++
++ -- Nobuhiro Iwamatsu <iwamatsu@nigauri.org>  Tue, 07 Jun 2011 11:29:12 +0900
++
+ directfb (1.2.10.0-4) unstable; urgency=low
+ 
+   * Drop libmpeg3-dev build-dependency/dependency. (Closes: #507527)
+diff -Nru directfb-1.2.10.0/debian/patches/debian-changes-1.2.10.0-4.1 directfb-1.2.10.0/debian/patches/debian-changes-1.2.10.0-4.1
+--- directfb-1.2.10.0/debian/patches/debian-changes-1.2.10.0-4.1	1970-01-01 09:00:00.000000000 +0900
++++ directfb-1.2.10.0/debian/patches/debian-changes-1.2.10.0-4.1	2011-06-07 13:17:27.000000000 +0900
+@@ -0,0 +1,278 @@
++Description: Upstream changes introduced in version 1.2.10.0-4.1
++ This patch has been created by dpkg-source during the package build.
++ Here's the last changelog entry, hopefully it gives details on why
++ those changes were made:
++ .
++ directfb (1.2.10.0-4.1) unstable; urgency=low
++ .
++   * Non-maintainer upload.
++   * libpng transition.
++   * Fix FTBFS.
++ .
++ The person named in the Author field signed this changelog entry.
++Author: Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
++
++---
++The information above should follow the Patch Tagging Guidelines, please
++checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
++are templates for supplementary fields that you might want to add:
++
++Origin: <vendor|upstream|other>, <url of original patch>
++Bug: <url in upstream bugtracker>
++Bug-Debian: http://bugs.debian.org/<bugnumber>
++Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
++Forwarded: <no|not-needed|url proving that it has been forwarded>
++Reviewed-By: <name and email of someone who approved the patch>
++Last-Update: <YYYY-MM-DD>
++
++--- directfb-1.2.10.0.orig/tools/directfb-csource.c
+++++ directfb-1.2.10.0/tools/directfb-csource.c
++@@ -299,8 +299,11 @@ static DFBResult load_image (const char
++                                        NULL, NULL, NULL);
++      if (!png_ptr)
++           goto cleanup;
++-
++-     if (setjmp (png_ptr->jmpbuf)) {
+++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
+++     if (setjmp(png_jmpbuf((png_ptr)))) {
+++#else
+++	 if (setjmp (png_ptr->jmpbuf)) {
+++#endif
++           if (desc->preallocated[0].data) {
++                free (desc->preallocated[0].data);
++                desc->preallocated[0].data = NULL;
++@@ -368,6 +371,23 @@ static DFBResult load_image (const char
++ 
++      switch (src_format) {
++           case DSPF_LUT8:
+++          {
+++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
+++               png_colorp png_palette;
+++               int png_num_palette;
+++			   png_get_PLTE(png_ptr, info_ptr, &png_palette, &png_num_palette);
+++               if (png_num_palette) {
+++                    png_byte *alpha;
+++                    int       i, num;
+++
+++                    *palette_size = MIN (png_num_palette, 256);
+++                    for (i = 0; i < *palette_size; i++) {
+++                         palette[i].a = 0xFF;
+++                         palette[i].r = png_palette[i].red;
+++                         palette[i].g = png_palette[i].green;
+++                         palette[i].b = png_palette[i].blue;
+++                    }
+++#else
++                if (info_ptr->num_palette) {
++                     png_byte *alpha;
++                     int       i, num;
++@@ -379,13 +399,16 @@ static DFBResult load_image (const char
++                          palette[i].g = info_ptr->palette[i].green;
++                          palette[i].b = info_ptr->palette[i].blue;
++                     }
+++#endif
++                     if (png_get_valid (png_ptr, info_ptr, PNG_INFO_tRNS)) {
++                          png_get_tRNS (png_ptr, info_ptr, &alpha, &num, NULL);
++                          for (i = 0; i < MIN (num, *palette_size); i++)
++                               palette[i].a = alpha[i];
++                     }
++                }
+++
++                break;
+++          }
++           case DSPF_RGB32:
++                 png_set_filler (png_ptr, 0xFF,
++ #ifdef WORDS_BIGENDIAN
++--- directfb-1.2.10.0.orig/tools/mkdfiff.c
+++++ directfb-1.2.10.0/tools/mkdfiff.c
++@@ -96,8 +96,11 @@ load_image (const char            *filen
++                                        NULL, NULL, NULL);
++      if (!png_ptr)
++           goto cleanup;
++-
+++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
+++     if (setjmp(png_jmpbuf((png_ptr)))) {
+++#else
++      if (setjmp (png_ptr->jmpbuf)) {
+++#endif
++           if (desc->preallocated[0].data) {
++                free (desc->preallocated[0].data);
++                desc->preallocated[0].data = NULL;
++--- directfb-1.2.10.0.orig/interfaces/IDirectFBImageProvider/idirectfbimageprovider_png.c
+++++ directfb-1.2.10.0/interfaces/IDirectFBImageProvider/idirectfbimageprovider_png.c
++@@ -204,7 +204,11 @@ Construct( IDirectFBImageProvider *thiz,
++      if (!data->png_ptr)
++           goto error;
++ 
+++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
+++     if (setjmp(png_jmpbuf((data->png_ptr)))) {
+++#else
++      if (setjmp( data->png_ptr->jmpbuf )) {
+++#endif
++           D_ERROR( "ImageProvider/PNG: Error reading header!\n" );
++           goto error;
++      }
++@@ -331,7 +335,11 @@ IDirectFBImageProvider_PNG_RenderTo( IDi
++           rect = dst_data->area.wanted;
++      }
++ 
+++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
+++     if (setjmp(png_jmpbuf((data->png_ptr)))) {
+++#else
++      if (setjmp( data->png_ptr->jmpbuf )) {
+++#endif
++           D_ERROR( "ImageProvider/PNG: Error during decoding!\n" );
++ 
++           if (data->stage < STAGE_IMAGE)
++@@ -357,7 +365,12 @@ IDirectFBImageProvider_PNG_RenderTo( IDi
++ 
++           switch (data->color_type) {
++                case PNG_COLOR_TYPE_PALETTE:
+++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
+++                    if (dst_surface->config.format == DSPF_LUT8 && png_get_bit_depth(data->png_ptr, info) == 8) {
+++
+++#else
++                     if (dst_surface->config.format == DSPF_LUT8 && data->info_ptr->bit_depth == 8) {
+++#endif
++                          /*
++                           * Special indexed PNG to LUT8 loading.
++                           */
++@@ -379,7 +392,6 @@ IDirectFBImageProvider_PNG_RenderTo( IDi
++                          }
++                     }
++                     /* fall through */
++-
++                case PNG_COLOR_TYPE_GRAY: {
++                     /*
++                      * Convert to ARGB and use generic loading code.
++@@ -400,8 +412,11 @@ IDirectFBImageProvider_PNG_RenderTo( IDi
++                     }
++                     else {
++                          if (data->color_type == PNG_COLOR_TYPE_GRAY) {
+++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
+++                              int num = 1 << png_get_bit_depth(data->png_ptr, info);
+++#else
++                               int num = 1 << data->info_ptr->bit_depth;
++-
+++#endif
++                               for (x=0; x<num; x++) {
++                                    int value = x * 255 / (num - 1);
++ 
++@@ -409,7 +424,11 @@ IDirectFBImageProvider_PNG_RenderTo( IDi
++                               }
++                          }
++ 
+++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
+++                         switch (png_get_bit_depth(data->png_ptr, info)) {
+++#else
++                          switch (data->info_ptr->bit_depth) {
+++#endif
++                               case 8:
++                                    for (y=0; y<data->height; y++) {
++                                         u8  *S = data->image + data->pitch * y;
++@@ -464,8 +483,12 @@ IDirectFBImageProvider_PNG_RenderTo( IDi
++ 
++                               default:
++                                    D_ERROR( "ImageProvider/PNG: Unsupported indexed bit depth %d!\n",
+++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
+++                                            png_get_bit_depth(data->png_ptr, info));
+++#else
++                                             data->info_ptr->bit_depth );
++-                         }
+++#endif
+++								   }
++ 
++                          dfb_scale_linear_32( image_argb, data->width, data->height,
++                                               lock.addr, lock.pitch, &rect, dst_surface, &clip );
++@@ -635,12 +658,30 @@ png_info_callback( png_structp png_read_
++           /* generate color key based on palette... */
++           if (data->color_type == PNG_COLOR_TYPE_PALETTE) {
++                u32        key;
+++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
+++               png_colorp palette;
+++               png_bytep  trans;
+++               int        num_colors;
+++			   int        num_palette;
+++			   int        num_trans;
+++               u8         **cmap;
+++
+++               png_get_PLTE(data->png_ptr, data->info_ptr,
+++					&palette, &num_palette);
+++			   png_get_tRNS(data->png_ptr, data->info_ptr,
+++                    &trans, &num_trans, NULL);
+++               num_colors = MIN( MAXCOLORMAPSIZE, num_palette );
+++
+++               cmap = malloc(sizeof(u8*)*3);
+++               for(i = 0 ; i < 3; i++)
+++                     cmap[i] = malloc(sizeof(u8) * num_colors);
+++#else
++                png_colorp palette    = data->info_ptr->palette;
++                png_bytep  trans      = data->info_ptr->trans;
++                int        num_colors = MIN( MAXCOLORMAPSIZE,
++                                             data->info_ptr->num_palette );
++                u8         cmap[3][num_colors];
++-
+++#endif
++                for (i=0; i<num_colors; i++) {
++                     cmap[0][i] = palette[i].red;
++                     cmap[1][i] = palette[i].green;
++@@ -649,7 +690,11 @@ png_info_callback( png_structp png_read_
++ 
++                key = FindColorKey( num_colors, &cmap[0][0] );
++ 
+++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
+++               for (i=0; i<num_trans; i++) {
+++#else
++                for (i=0; i<data->info_ptr->num_trans; i++) {
+++#endif
++                     if (!trans[i]) {
++                          palette[i].red   = (key & 0xff0000) >> 16;
++                          palette[i].green = (key & 0x00ff00) >>  8;
++@@ -658,11 +703,20 @@ png_info_callback( png_structp png_read_
++                }
++ 
++                data->color_key = key;
+++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
+++               for(i = 0 ; i < 3; i++)
+++                     free(cmap[i]);
+++               free(cmap);
+++#endif
++           }
++           else {
++                /* ...or based on trans rgb value */
+++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
+++               png_color_16p trans;
+++               png_get_tRNS(data->png_ptr, data->info_ptr, NULL, NULL, &trans);
+++#else
++                png_color_16p trans = &data->info_ptr->trans_values;
++-
+++#endif
++                data->color_key = (((trans->red & 0xff00) << 8) |
++                                   ((trans->green & 0xff00)) |
++                                   ((trans->blue & 0xff00) >> 8));
++@@ -671,11 +725,25 @@ png_info_callback( png_structp png_read_
++ 
++      switch (data->color_type) {
++           case PNG_COLOR_TYPE_PALETTE: {
+++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
+++               png_colorp palette;
+++               png_bytep  trans;
+++               int        num_colors;
+++			   int        num_palette;
+++			   int        num_trans;
+++
+++               png_get_PLTE(data->png_ptr, data->info_ptr,
+++					&palette, &num_palette);
+++			   png_get_tRNS(data->png_ptr, data->info_ptr,
+++                    &trans, &num_trans, NULL);
+++               num_colors = MIN( MAXCOLORMAPSIZE, num_palette );
+++#else
+++
++                png_colorp palette    = data->info_ptr->palette;
++                png_bytep  trans      = data->info_ptr->trans;
++                int        num_trans  = data->info_ptr->num_trans;
++                int        num_colors = MIN( MAXCOLORMAPSIZE, data->info_ptr->num_palette );
++-
+++#endif
++                for (i=0; i<num_colors; i++) {
++                     data->colors[i].a = (i < num_trans) ? trans[i] : 0xff;
++                     data->colors[i].r = palette[i].red;
+diff -Nru directfb-1.2.10.0/debian/patches/series directfb-1.2.10.0/debian/patches/series
+--- directfb-1.2.10.0/debian/patches/series	2009-10-20 17:00:11.000000000 +0900
++++ directfb-1.2.10.0/debian/patches/series	2011-06-07 11:42:55.000000000 +0900
+@@ -4,3 +4,4 @@
+ 70_linux_fusion.patch
+ 90_linux_config.h.patch
+ 93_fix_unicode_key_handling.patch
++debian-changes-1.2.10.0-4.1
+diff -Nru directfb-1.2.10.0/debian/rules directfb-1.2.10.0/debian/rules
+--- directfb-1.2.10.0/debian/rules	2010-03-25 21:01:18.000000000 +0900
++++ directfb-1.2.10.0/debian/rules	2011-06-07 11:29:04.000000000 +0900
+@@ -16,7 +16,7 @@
+ BUILD_DIST := directfb-build
+ BUILD_UDEB := directfb-udeb
+ 
+-conf_script_env := LDFLAGS="-wl,--as-needed"
++conf_script_env := LDFLAGS="-Wl,--as-needed"
+ 
+ DEB_HOST_ARCH_OS   ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
+ DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)

@@ -1,0 +1,20 @@
+--- gnome-xcf-thumbnailer-1.0.orig/xcf2png.c
++++ gnome-xcf-thumbnailer-1.0/xcf2png.c
+@@ -70,10 +70,17 @@
+   png_bytep ptrans = NULL ;
+   
+   outfile = openout(flatspec.output_filename);
++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
++  libpng = png_create_write_struct(PNG_LIBPNG_VER_STRING,
++                                   NULL,
++                                   my_error_callback,
++                                   NULL);
++#else
+   libpng = png_create_write_struct(PNG_LIBPNG_VER_STRING,
+                                    png_voidp_NULL,
+                                    my_error_callback,
+                                    png_error_ptr_NULL);
++#endif
+   if( !libpng )
+     FatalUnexpected(_("Couldn't initialize libpng library"));
+   

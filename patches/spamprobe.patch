@@ -1,0 +1,17 @@
+--- spamprobe-1.4d.orig/src/parser/PngParser.cc
++++ spamprobe-1.4d/src/parser/PngParser.cc
+@@ -37,6 +37,14 @@
+ #include "StringReader.h"
+ #include "PngParser.h"
+ 
++#ifndef int_p_NULL
++#define int_p_NULL NULL
++#endif
++
++#ifndef png_infopp_NULL
++#define png_infopp_NULL NULL
++#endif
++
+ PngParser::PngParser(Message *message,
+                      AbstractTokenizer *tokenizer,
+                      AbstractTokenReceiver *receiver,

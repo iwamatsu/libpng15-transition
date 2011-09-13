@@ -1,0 +1,10 @@
+--- aaphoto-0.41.orig/aaphoto.c
++++ aaphoto-0.41/aaphoto.c
+@@ -243,6 +243,7 @@ char slsh='/';
+ #ifndef __BMP_ONLY__
+ #include <jasper/jasper.h>
+ #include <png.h>
++#include <zlib.h>
+ #include <jpeglib.h>
+ #endif
+ 

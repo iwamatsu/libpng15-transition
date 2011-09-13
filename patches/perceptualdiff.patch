@@ -1,0 +1,33 @@
+--- perceptualdiff-1.0.1.orig/RGBAImage.cpp
++++ perceptualdiff-1.0.1/RGBAImage.cpp
+@@ -102,13 +102,25 @@
+ 	png_bytep *row_pointers;
+ 	row_pointers = png_get_rows(png_ptr, info_ptr);
+ 
+-	fimg = new RGBAImage(png_ptr->width, png_ptr->height);
+-	for (int y = 0; y < (int) png_ptr->height; y++) {
+-		for (int x = 0; x < (int) png_ptr->width; x++) {
++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
++	png_uint_32 width;
++	png_uint_32 height;
++	int color_type;
++
++	png_get_IHDR(png_ptr, info_ptr, &width, &height, NULL, &color_type, NULL, NULL, NULL);
++#else
++	png_uint_32 = png_ptr->width;
++	png_uint_32 = png_ptr->height;
++	int color_type = png_ptr->color_type;
++#endif
++
++	fimg = new RGBAImage(width, height);
++	for (int y = 0; y < (int) height; y++) {
++		for (int x = 0; x < (int) width; x++) {
+ 			uint32 value = 0;
+-			if (png_ptr->color_type == PNG_COLOR_TYPE_RGB_ALPHA)
++			if (color_type == PNG_COLOR_TYPE_RGB_ALPHA)
+ 				value = ((uint32)row_pointers[y][x*4]) | (((uint32)row_pointers[y][x*4+1])<<8) | (((uint32)row_pointers[y][x*4+2])<<16) |(((uint32)row_pointers[y][x*4+3])<<24);
+-			else if (png_ptr->color_type == PNG_COLOR_TYPE_RGB)
++			else if (color_type == PNG_COLOR_TYPE_RGB)
+ 				value = ((uint32)row_pointers[y][x*3] /*B*/) | (((uint32)row_pointers[y][x*3+1] /*G*/)<<8) | (((uint32)row_pointers[y][x*3+2]/*R*/)<<16) | (0xFFUL << 24);
+ 		   fimg->Set(x,y, value);
+ 		}

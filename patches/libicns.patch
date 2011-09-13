@@ -1,0 +1,44 @@
+diff -u libicns-0.7.1/debian/changelog libicns-0.7.1/debian/changelog
+--- libicns-0.7.1/debian/changelog
++++ libicns-0.7.1/debian/changelog
+@@ -1,3 +1,10 @@
++libicns (0.7.1-1.1) unstable; urgency=low
++
++  * Non-maintainer upload.
++  * libpng transition.
++
++ -- Nobuhiro Iwamatsu <iwamatsu@nigauri.org>  Mon, 06 Jun 2011 21:09:03 +0900
++
+ libicns (0.7.1-1) unstable; urgency=low
+ 
+   * New upstream release
+only in patch2:
+unchanged:
+--- libicns-0.7.1.orig/icnsutils/png2icns.c
++++ libicns-0.7.1/icnsutils/png2icns.c
+@@ -70,8 +70,11 @@
+ 	switch (color_type)
+ 	{
+ 		case PNG_COLOR_TYPE_GRAY:
++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
++			png_set_expand_gray_1_2_4_to_8(png_ptr);
++#else
+ 			png_set_gray_1_2_4_to_8(png_ptr);
+-
++#endif
+ 			if (bit_depth == 16) {
+ 				png_set_strip_16(png_ptr);
+ 				bit_depth = 8;
+@@ -82,8 +85,11 @@
+ 			break;
+ 
+ 		case PNG_COLOR_TYPE_GRAY_ALPHA:
++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
++			png_set_expand_gray_1_2_4_to_8(png_ptr);
++#else
+ 			png_set_gray_1_2_4_to_8(png_ptr);
+-
++#endif
+ 			if (bit_depth == 16) {
+ 				png_set_strip_16(png_ptr);
+ 				bit_depth = 8;

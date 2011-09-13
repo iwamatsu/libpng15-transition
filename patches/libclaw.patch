@@ -1,0 +1,38 @@
+diff -u libclaw-1.6.1/debian/changelog libclaw-1.6.1/debian/changelog
+--- libclaw-1.6.1/debian/changelog
++++ libclaw-1.6.1/debian/changelog
+@@ -1,3 +1,10 @@
++libclaw (1.6.1-4.1) unstable; urgency=low
++
++  * Non-maintainer upload.
++  * libpng transition.
++
++ -- Nobuhiro Iwamatsu <iwamatsu@nigauri.org>  Mon, 06 Jun 2011 17:03:03 +0900
++
+ libclaw (1.6.1-4) unstable; urgency=low
+ 
+   [ Julien Jorge ]
+diff -u libclaw-1.6.1/debian/rules libclaw-1.6.1/debian/rules
+--- libclaw-1.6.1/debian/rules
++++ libclaw-1.6.1/debian/rules
+@@ -49,7 +49,7 @@
+ 	find . -name "*-static.a" | while read f; do \
+ 	  mv $$f `echo $$f | sed s/-static//`; \
+ 	done
+-	rm $(CURDIR)/debian/tmp/usr/share/doc/libclaw1/html/jquery.js
++	rm -rf $(CURDIR)/debian/tmp/usr/share/doc/libclaw1/html/jquery.js
+ 	ln -s /usr/share/javascript/jquery/jquery.js \
+ 	  $(CURDIR)/debian/tmp/usr/share/doc/libclaw1/html/jquery.js
+ 	docbook-to-man debian/claw-config.man.sgml > debian/claw-config.1
+only in patch2:
+unchanged:
+--- libclaw-1.6.1.orig/claw/png.hpp
++++ libclaw-1.6.1/claw/png.hpp
+@@ -32,6 +32,7 @@
+ 
+ #include <claw/image.hpp>
+ #include <png.h>
++#include <zlib.h>
+ #include <setjmp.h>
+ #include <iostream>
+ #include <string>

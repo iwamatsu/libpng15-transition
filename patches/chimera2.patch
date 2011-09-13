@@ -1,0 +1,30 @@
+diff -u chimera2-2.0a19/image/png.c chimera2-2.0a19/image/png.c
+--- chimera2-2.0a19/image/png.c
++++ chimera2-2.0a19/image/png.c
+@@ -238,7 +238,7 @@
+     if (!png)
+         return;
+ 
+-    if (setjmp(png->state->jmpbuf))
++	if (setjmp(png_jmpbuf((png->state))))
+         return;
+ 
+     if (png->state) {
+@@ -260,7 +260,7 @@
+ {
+     pngState *png = (pngState *) pointer;
+ 
+-    if (setjmp(png->state->jmpbuf))
++    if (setjmp(png_jmpbuf((png->state))))
+         return image_error;
+ 
+     if (len > png->lenSoFar) {
+@@ -293,7 +293,7 @@
+     png->info = png_create_info_struct(png->state);
+     assert(png->state && png->info);
+ 
+-    if (setjmp(png->state->jmpbuf)) {
++    if (setjmp(png_jmpbuf((png->state)))) {
+         png_destroy_read_struct(&png->state, &png->info, NULL);
+         png->state = 0;
+         png->info = 0;

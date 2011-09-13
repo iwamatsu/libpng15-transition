@@ -1,0 +1,15 @@
+--- matanza-0.13+ds1.orig/matanza.w
++++ matanza-0.13+ds1/matanza.w
+@@ -9822,8 +9822,11 @@ mat_png_load ( char const *path )
+       png_destroy_read_struct(&png_ptr, NULL, NULL);
+       exit(EXIT_FAILURE);
+     }
+-
++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
++  if (setjmp(png_jmpbuf((png_ptr))))
++#else
+   if (setjmp(png_ptr->jmpbuf))
++#endif
+     {
+       fprintf(stderr, "%s: %s\n", program_name, strerror(errno));
+       png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
