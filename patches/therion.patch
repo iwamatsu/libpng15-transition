@@ -1,0 +1,12 @@
+diff -Nru therion-5.3.8/debian/patches/25debianize-loch-makefile.patch therion-5.3.8/debian/patches/25debianize-loch-makefile.patch
+--- therion-5.3.8/debian/patches/25debianize-loch-makefile.patch	2011-06-01 00:02:59.000000000 +0900
++++ therion-5.3.8/debian/patches/25debianize-loch-makefile.patch	2011-09-14 07:49:09.000000000 +0900
+@@ -27,7 +27,7 @@
+  CCPFLAGS = -DLXLINUX  $(shell wx-config --cflags)
+  LXLIBDIR = linux
+ -PLIBS = $(shell wx-config --libs --gl-libs) -L$(VTKLIBPATH) $(VTKLIBS) -lGLU -lpthread -lz 
+-+PLIBS = $(shell wx-config --libs --gl-libs) $(VTKLIBS) -lGLU -lpthread -lz -lpng12 -ljpeg -lX11 -lGL
+++PLIBS = $(shell wx-config --libs --gl-libs) $(VTKLIBS) -lGLU -lpthread -lz -lpng15 -ljpeg -lX11 -lGL
+  LXPLATFORM = LINUX
+  
+  # PLATFORM WIN32
