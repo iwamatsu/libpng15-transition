@@ -1,0 +1,10 @@
+--- alevt-1.6.2.orig/exp-gfx.c
++++ alevt-1.6.2/exp-gfx.c
+@@ -157,6 +157,7 @@
+ 
+ #ifdef WITH_PNG
+ 
++#include <zlib.h>
+ #include <png.h>
+ static int png_open(struct export *e);
+ static int png_option(struct export *e, int opt, char *arg);

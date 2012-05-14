@@ -1,0 +1,38 @@
+diff -u tvtime-1.0.2/debian/control tvtime-1.0.2/debian/control
+--- tvtime-1.0.2/debian/control
++++ tvtime-1.0.2/debian/control
+@@ -5,7 +5,7 @@
+ Build-Depends:
+  debhelper (>= 7),
+  zlib1g-dev,
+- libpng-dev,
++ libpng-dev (>= 1.5),
+  libfreetype6-dev,
+  libx11-dev,
+  libxext-dev,
+diff -u tvtime-1.0.2/debian/changelog tvtime-1.0.2/debian/changelog
+--- tvtime-1.0.2/debian/changelog
++++ tvtime-1.0.2/debian/changelog
+@@ -1,3 +1,10 @@
++tvtime (1.0.2-8.1) unstable; urgency=low
++
++  * Non-maintainer upload.
++  * Fix FTBFS with libpng 1.5.
++
++ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Mon, 14 May 2012 17:38:42 +0900
++
+ tvtime (1.0.2-8) unstable; urgency=low
+ 
+   * debian/control: Build-Depends: quilt, chrpath.
+only in patch2:
+unchanged:
+--- tvtime-1.0.2.orig/src/pngoutput.c
++++ tvtime-1.0.2/src/pngoutput.c
+@@ -18,6 +18,7 @@
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
++#include <zlib.h>
+ #include <png.h>
+ #include "pngoutput.h"
+ 
