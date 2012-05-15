@@ -1,0 +1,90 @@
+--- libgpiv-0.6.1.orig/lib/io_png.c
++++ libgpiv-0.6.1/lib/io_png.c
+@@ -167,8 +167,12 @@
+     }
+     
+     png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING,
++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
++									NULL, NULL, NULL);
++#else
+                                       png_voidp_NULL, png_error_ptr_NULL, 
+                                       png_error_ptr_NULL);
++#endif
+     if (png_ptr == NULL) {
+         g_warning ("gpiv_read_png_image: failing png_create_read_struct()");
+         return NULL;
+@@ -177,7 +181,11 @@
+     info_ptr = png_create_info_struct (png_ptr);
+     if (info_ptr == NULL) {
+         fclose (fp);
++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
++        png_destroy_read_struct (&png_ptr, NULL, NULL);
++#else
+         png_destroy_read_struct (&png_ptr, png_infopp_NULL, png_infopp_NULL);
++#endif
+         g_warning ("gpiv_read_png_image: failing png_create_info_struct (png_ptr)");
+         return NULL;
+     }
+@@ -201,7 +209,11 @@
+     }
+     
+ #ifdef HILEVEL
+-    png_read_png (png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, png_voidp_NULL);
++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
++    png_read_png (png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
++#else
++	png_read_png (png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, png_voidp_NULL);
++#endif
+ #else
+     png_read_info (png_ptr, info_ptr);
+ #endif /* HILEVEL */
+@@ -317,8 +329,11 @@
+         g_warning ("gpiv_read_png_image: image is not PNG_INTERLACE_NONE");
+         return NULL;
+     }
+-
++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
++	if(png_get_bit_depth(png_ptr, info_ptr) == 16) {
++#else
+     if (info_ptr->bit_depth == 16) {
++#endif
+         linesize = 2 * width;
+     } else {
+         linesize = width;
+@@ -472,8 +487,12 @@
+      * Allocate png_ structures
+      */
+     png_ptr = png_create_write_struct (PNG_LIBPNG_VER_STRING,
++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
++                                       NULL, NULL, NULL);
++#else
+                                        png_voidp_NULL, png_error_ptr_NULL, 
+                                        png_error_ptr_NULL);
++#endif
+     if (png_ptr == NULL) {
+         err_msg = "gpiv_write_png_image: failing png_create_write_struct()";
+         return err_msg;
+@@ -546,7 +565,11 @@
+     /* 
+      * Write image to png struct
+      */
++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
++	if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_GRAY) {
++#else
+     if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY) {
++#endif
+ #ifdef WRITE_IMAGEDATA_LINE
+         png_byte *line;
+ #else
+only in patch2:
+unchanged:
+--- libgpiv-0.6.1.orig/include/gpiv.h
++++ libgpiv-0.6.1/include/gpiv.h
+@@ -200,6 +200,7 @@
+ #include <fftw3.h>
+ #include <hdf5.h>
+ #include <glib-2.0/glib.h>
++#include <zlib.h>
+ #include <png.h>
+ 
+ #ifdef ENABLE_CAM
