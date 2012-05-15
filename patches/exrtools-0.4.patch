@@ -1,0 +1,10 @@
+--- exrtools-0.4.orig/src/pngoutput.c
++++ exrtools-0.4/src/pngoutput.c
+@@ -26,6 +26,7 @@
+ #include <stdlib.h>
+ #include <errno.h>
+ #include <string.h>
++#include <zlib.h>
+ #include <png.h>
+ #include "pngoutput.h"
+ 

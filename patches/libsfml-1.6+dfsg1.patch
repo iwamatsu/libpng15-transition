@@ -1,0 +1,39 @@
+--- libsfml-1.6+dfsg1.orig/src/SFML/Graphics/ImageLoader.cpp
++++ libsfml-1.6+dfsg1/src/SFML/Graphics/ImageLoader.cpp
+@@ -44,7 +44,11 @@
+     void PngErrorHandler(png_structp Png, png_const_charp Message)
+     {
+         std::cerr << "Failed to write PNG image. Reason : " << Message << std::endl;
++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
++		longjmp(png_jmpbuf((Png)),1);
++#else
+         longjmp(Png->jmpbuf, 1);
++#endif
+     }
+ }
+ 
+@@ -289,7 +293,11 @@
+     }
+ 
+     // For proper error handling...
+-    if (setjmp(Png->jmpbuf))
++#if PNG_LIBPNG_VER_MAJOR >= 1 && PNG_LIBPNG_VER_MINOR >= 4
++    if (setjmp(png_jmpbuf(Png)))
++#else
++    if ( setjmp(Png->jmpbuf))
++#endif
+     {
+         png_destroy_write_struct(&Png, &PngInfo);
+         return false;
+only in patch2:
+unchanged:
+--- libsfml-1.6+dfsg1.orig/src/SFML/Window/Linux/Joystick.hpp
++++ libsfml-1.6+dfsg1/src/SFML/Window/Linux/Joystick.hpp
+@@ -31,6 +31,7 @@
+ #if defined(SFML_SYSTEM_LINUX)
+     #include <linux/joystick.h>
+     #include <fcntl.h>
++    #include <unistd.h>
+ #elif defined(SFML_SYSTEM_FREEBSD)
+     // #include <sys/joystick.h> ?
+     #define ABS_MAX 1
